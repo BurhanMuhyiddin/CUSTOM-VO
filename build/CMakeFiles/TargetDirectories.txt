@@ -1,0 +1,3 @@
+/media/burhan/D/all_tasks/vo/build/CMakeFiles/rebuild_cache.dir
+/media/burhan/D/all_tasks/vo/build/CMakeFiles/main.dir
+/media/burhan/D/all_tasks/vo/build/CMakeFiles/edit_cache.dir

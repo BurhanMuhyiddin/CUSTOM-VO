@@ -1,0 +1,19 @@
+# ==============================================
+# =============== Select dataset =============== 
+# ==============================================
+
+dataset_name: "new_tsukuba_stereo"
+
+new_tsukuba_stereo:
+  
+  # Dataset info
+  dataset_dir: "/media/burhan/D/downloads/NTSD-complete-v1.0.1/NewTsukubaStereoDataset/illumination/daylight/"
+  mode: 0 # 0 for images, 1 for video
+  num_images: 1800
+
+  # Camera info
+  camera_info:
+    fx: 615
+    fy: 615
+    cx: 320
+    cy: 240
