@@ -4,7 +4,7 @@
 
 MyVO::MyVO(const std::string &conf_file):
             running_(true) {
-    ConfigureVO();
+    ConfigureVO(conf_file);
     
     std::vector<std::string> temp_image_path_buff;
     switch (mode_) {
@@ -69,17 +69,20 @@ void MyVO::InitializeVO() {
 
 }
 
-void MyVO::ConfigureVO() {
-    std::string dataset_name = Config::GetInstance().GetParam<std::string>("dataset_name");
+void MyVO::ConfigureVO(const std::string& conf_file) {
+    Config::LoadConfigFile(conf_file);
 
-    dataset_path_ = Config::GetInstance().GetParam<std::string>(dataset_name+"/dataset_dir");
-    mode_ = static_cast<MODE>(Config::GetInstance().GetParam<int>(dataset_name+"/mode"));
-    num_images_ = Config::GetInstance().GetParam<size_t>(dataset_name+"/num_images");
-    auto camera_info = Config::GetInstance().GetParam<std::map<std::string, double>>(dataset_name+"/camera_info");
-    double fx = camera_info["fx"];
-    double fy = camera_info["fy"];
-    double cx = camera_info["cx"];
-    double cy = camera_info["cy"];
+    json config = Config::GetConfigData();
+
+    std::string dataset_name = config["dataset_name"].get<std::string>();
+
+    dataset_path_ = config[dataset_name]["dataset_dir"].get<std::string>();
+    mode_ = static_cast<MODE>(config[dataset_name]["mode"].get<int>());
+    num_images_ = config[dataset_name]["num_images"].get<size_t>();
+    double fx = config[dataset_name]["camera_info"]["fx"].get<double>();
+    double fy = config[dataset_name]["camera_info"]["fy"].get<double>();
+    double cx = config[dataset_name]["camera_info"]["cx"].get<double>();
+    double cy = config[dataset_name]["camera_info"]["cy"].get<double>();
     K_ = (cv::Mat_<double>(3,3) << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0);
 }
 
@@ -89,7 +92,7 @@ cv::Mat MyVO::ReadCurrentFrame() {
     switch (mode_) {
     case IMAGES:
         if (frames_.empty())    break;
-        frame = cv::imread(frames_.front(), CV_LOAD_IMAGE_COLOR);
+        frame = cv::imread(frames_.front(), cv::IMREAD_COLOR);
         frames_.pop();
         break;
     case VIDEO:

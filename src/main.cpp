@@ -5,13 +5,13 @@
 #include "my_VO.h"
 #include "logger.hpp"
 
-const std::string config_file("../config/vo_config.yaml");
+const std::string config_file("../config/vo_config.json");
 
 std::unique_ptr<MyVO> vo;
 
 void signal_callback_handler(int signum) {
     logger::LogInfo("main", "Ctrl+c detected!");
-    // vo->Stop();
+    vo->Stop();
 }
 
 int main() {

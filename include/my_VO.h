@@ -33,10 +33,10 @@ public:
 
     void Stop();
 private:
-    void ConfigureVO();
+    void ConfigureVO(const std::string& conf_file);
     cv::Mat ReadCurrentFrame();
 private:
-    bool is_VO_initilaized_;
+    bool is_VO_initilaized_ = false;
     std::unique_ptr<cv::VideoCapture> cap_;
 
     std::atomic<bool> running_;

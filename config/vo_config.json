@@ -1,0 +1,15 @@
+{
+    "dataset_name": "new_tsukuba_stereo",
+    
+    "new_tsukuba_stereo": {
+        "dataset_dir": "../data/rgbd_dataset_freiburg3_long_office_household/",
+        "mode": 0,
+        "num_images": 2585,
+        "camera_info": {
+            "fx": 535.4,
+            "fy": 539.2,
+            "cx": 320.1,
+            "cy": 247.6
+        }
+    }
+}
