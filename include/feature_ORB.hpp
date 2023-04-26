@@ -18,7 +18,7 @@ public:
 
     cv::Mat getDescriptor() const { return descriptors_; }
 
-    std::vector<cv::KeyPoint> getKeypoints() const { return keypoints_; }
+    std::vector<cv::KeyPoint>& getKeypoints() { return keypoints_; }
 
 private:
     cv::Ptr<cv::FeatureDetector> detector_;
@@ -52,6 +52,24 @@ public:
     }
 
     std::vector<cv::DMatch> getMatches() const { return filtered_matches_; }
+
+    std::pair<std::vector<cv::Point2f>, std::vector<cv::Point2f>> GetMatchedPoints() {
+        std::vector<cv::Point2f> points1;
+        std::vector<cv::Point2f> points2;
+
+        auto keypoints_1 = ext1_.getKeypoints();
+        auto keypoints_2 = ext2_.getKeypoints();
+
+        for (int i = 0; i < (int) filtered_matches_.size(); ++i) {
+            points1.push_back(keypoints_1[filtered_matches_[i].queryIdx].pt);
+            points2.push_back(keypoints_2[filtered_matches_[i].trainIdx].pt);
+        }
+
+        return { points1, points2 };
+    }
+
+    size_t GetNumMatchedPoints() const { return filtered_matches_.size(); }
+
 private:
     void FilterMatches(const std::vector<cv::DMatch> &matches) {
         filtered_matches_.clear();

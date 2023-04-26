@@ -3,6 +3,8 @@ project(my_vo)
 
 ADD_COMPILE_OPTIONS(-std=c++17 )
 set( CMAKE_CXX_FLAGS "-std=c++17 -O3" )
+set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG")
 
 find_package(Eigen3 REQUIRED)
 

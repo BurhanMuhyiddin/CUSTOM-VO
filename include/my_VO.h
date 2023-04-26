@@ -7,7 +7,6 @@
 #include <queue>
 #include <vector>
 #include <algorithm>
-#include <yaml-cpp/yaml.h>
 
 #include "opencv2/opencv.hpp"
 
@@ -29,7 +28,7 @@ public:
 
     void Run();
 
-    void InitializeVO();
+    bool InitializeVO();
 
     void Stop();
 private:

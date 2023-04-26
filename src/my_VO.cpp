@@ -1,6 +1,9 @@
-#include "my_VO.h"
-
 #include <map>
+#include <stdexcept>
+
+#include "my_VO.h"
+#include "epipolar_geometry.hpp"
+#include "motion_estimation.hpp"
 
 MyVO::MyVO(const std::string &conf_file):
             running_(true) {
@@ -38,21 +41,18 @@ MyVO::~MyVO() {
 }
 
 void MyVO::Run() {
+    EpipolarGeometry::SetIntrinsicCameraMatrix(K_);
+
+    if (!InitializeVO()) {
+        throw std::runtime_error("Map cannot be initialized!\n");
+    }
+
     while (running_.load()) {
         cv::Mat frame;
 
         frame = ReadCurrentFrame();
 
         if (frame.empty())  break;
-
-        if (!is_VO_initilaized_) {
-            current_frame_ = frame.clone();
-
-            // initilaize VO
-
-            is_VO_initilaized_ = true;
-            continue;
-        }
 
         fm_.Match(current_frame_, frame);
         current_frame_ = frame.clone();
@@ -65,8 +65,64 @@ void MyVO::Run() {
     }
 }
 
-void MyVO::InitializeVO() {
+bool MyVO::InitializeVO() {
+    bool is_map_initialized = false;
+    bool is_homography = false;
 
+    cv::Mat F, H, E, transformMat;
+    double Fscore, Hscore;
+    std::vector<int> Finliers_index, Hinliers_index, inliers_index;
+
+    size_t min_num_matches = 100;
+    double ratio_threshold = 0.45;
+
+    auto first_frame = ReadCurrentFrame();
+    while (running_.load()) {
+        auto frame = ReadCurrentFrame();
+
+        fm_.Match(frame, first_frame);
+
+        if (fm_.GetNumMatchedPoints() < min_num_matches)
+            continue;
+
+        auto matched_points = fm_.GetMatchedPoints();
+
+        EpipolarGeometry::SetPoints(matched_points.first, matched_points.second);
+
+        // calculate fundamental matrix with its score
+        EpipolarGeometry::GetFundamentalMatrix(F, Fscore, Finliers_index);
+
+        // calculate homography matrix with its score
+        EpipolarGeometry::GetHomographyMatrix(H, Hscore, Hinliers_index);
+
+        // select model based on heuristic
+        double ratio = Hscore / (Hscore + Fscore);
+        if (ratio > ratio_threshold) {
+            transformMat = H;
+            inliers_index = Hinliers_index;
+
+            is_homography = true;
+        } else {
+            transformMat = F;
+            // calculate essential matrix
+            E = K_.t().mul(F).mul(K_);
+            inliers_index = Finliers_index;
+
+            is_homography = false;
+        }
+
+        cv::Mat R, t;
+        if (is_homography) {
+            estimate_motion_from_homography_mat(H, K_, matched_points.first, matched_points.second, R, t, Hinliers_index);
+        } else {
+            estimate_motion_from_essential_mat(E, K_, matched_points.first, matched_points.second, R, t, Finliers_index);
+        }
+
+        // do triangulation
+        
+    }
+
+    return is_map_initialized;
 }
 
 void MyVO::ConfigureVO(const std::string& conf_file) {
