@@ -4,6 +4,15 @@
 #include "my_VO.h"
 #include "epipolar_geometry.hpp"
 #include "motion_estimation.hpp"
+#include "helper_functions.hpp"
+
+#define PI 3.14159265359
+#define DEG2RAD(d)  (d * PI / 180.0)
+
+cv::Mat rigid_transform = (cv::Mat_<float>(3,4) << 1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0);
+double min_parallax = 1;
 
 MyVO::MyVO(const std::string &conf_file):
             running_(true) {
@@ -119,7 +128,18 @@ bool MyVO::InitializeVO() {
         }
 
         // do triangulation
-        
+        std::vector<cv::Point3f> xyz_points;
+        cv::Mat T2;
+        helper::from_Rt_to_T(R, t, T2);
+        if (!triangulate_two_frames(matched_points.first,
+                                    matched_points.second,
+                                    rigid_transform,
+                                    T2.rowRange(0, 3),
+                                    K_,
+                                    xyz_points,
+                                    DEG2RAD(min_parallax)))     continue;
+
+
     }
 
     return is_map_initialized;
