@@ -119,6 +119,8 @@ bool triangulate_two_frames(const std::vector<cv::Point2f> &points1,
     cv::Mat reprojection_error1 = cv::Mat(reprojected_points1).reshape(1).colRange(0, 2) - cv::Mat(points1).reshape(1);
     cv::Mat reprojection_error2 = cv::Mat(reprojected_points2).reshape(1).colRange(0, 2) - cv::Mat(points2).reshape(1);
 
+//    std::cout << reprojection_error1 << "\n";
+
     cv::Mat reprojection_error1_norm = cv::Mat::zeros(reprojection_error1.rows, 1, CV_32F);
     cv::Mat reprojection_error2_norm = cv::Mat::zeros(reprojection_error2.rows, 1, CV_32F);
     for (int i = 0; i < reprojection_error1.rows; ++i) {
@@ -133,7 +135,7 @@ bool triangulate_two_frames(const std::vector<cv::Point2f> &points1,
     cv::reduce(total_reprojection_error, mean_reprojection_error, 1, cv::REDUCE_AVG);
 
     for (int i =0; i < mean_reprojection_error.rows; ++i) {
-//        std::cout << mean_reprojection_error.at<double>(i, 0) << "," << is_in_front[i] << "\n";
+//        std::cout << mean_reprojection_error.at<float>(i, 0) << "," << is_in_front[i] << "\n";
         if (is_in_front[i] && (mean_reprojection_error.at<float>(i, 0) < min_reprojection_error))
             inlier_indices.push_back(i);
     }

@@ -28,7 +28,7 @@ public:
 
     void Run();
 
-    bool InitializeVO();
+    bool InitializeVO(std::vector<int> &inlier_match_indices);
 
     void Stop();
 private:

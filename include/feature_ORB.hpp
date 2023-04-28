@@ -7,7 +7,7 @@
 class FeatureExtractor {
 public:
     FeatureExtractor() {
-        detector_ = cv::ORB::create();
+        detector_ = cv::ORB::create(1000, 1.2f, 8, 31, 0, 2, cv::ORB::FAST_SCORE);
         descriptor_ = cv::ORB::create();
     }
 

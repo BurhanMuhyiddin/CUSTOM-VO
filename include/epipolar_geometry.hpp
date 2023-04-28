@@ -88,7 +88,7 @@ void EpipolarGeometry::GetFundamentalMatrix(cv::Mat &F, double &score, cv::Mat &
 
 void EpipolarGeometry::GetHomographyMatrix(cv::Mat &H, double &score, cv::Mat &inliers_mask) {
     H = cv::findHomography(points1_, points2_, inliers_mask, cv::RANSAC, 3.0);
-    H /= H.at<double>(2, 2);
+//    H /= H.at<double>(2, 2);
 
     cv::Mat inlier_points1, inlier_points2;
 
