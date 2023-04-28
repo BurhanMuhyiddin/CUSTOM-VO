@@ -9,8 +9,8 @@ public:
     EpipolarGeometry();
     ~EpipolarGeometry();
 
-    static void GetFundamentalMatrix(cv::Mat &F, double &score, std::vector<int> &inliers_index);
-    static void GetHomographyMatrix(cv::Mat &H, double &score, std::vector<int> &inliers_index);
+    static void GetFundamentalMatrix(cv::Mat &F, double &score, cv::Mat &inliers_mask);
+    static void GetHomographyMatrix(cv::Mat &H, double &score, cv::Mat &inliers_mask);
 
     static void SetIntrinsicCameraMatrix(const cv::Mat &K) { K_ = K.clone(); }
 
@@ -36,10 +36,9 @@ EpipolarGeometry::EpipolarGeometry() {
 EpipolarGeometry::~EpipolarGeometry() {
 }
 
-void EpipolarGeometry::GetFundamentalMatrix(cv::Mat &F, double &score, std::vector<int> &inliers_index) {
+void EpipolarGeometry::GetFundamentalMatrix(cv::Mat &F, double &score, cv::Mat &inliers_mask) {
     // auto E_matrix = cv::findEssentialMat(points1_, points2_, K_, cv::RANSAC, )
 
-    cv::Mat inliers_mask;
     F = cv::findFundamentalMat(points1_, points2_, inliers_mask, cv::RANSAC);
 
     cv::Mat inlier_points1, inlier_points2;
@@ -87,9 +86,9 @@ void EpipolarGeometry::GetFundamentalMatrix(cv::Mat &F, double &score, std::vect
     score = cv::Mat(temp1 + temp2).at<float>(0, 0);
 }
 
-void EpipolarGeometry::GetHomographyMatrix(cv::Mat &H, double &score, std::vector<int> &inliers_index) {
-    cv::Mat inliers_mask;
+void EpipolarGeometry::GetHomographyMatrix(cv::Mat &H, double &score, cv::Mat &inliers_mask) {
     H = cv::findHomography(points1_, points2_, inliers_mask, cv::RANSAC, 3.0);
+    H /= H.at<double>(2, 2);
 
     cv::Mat inlier_points1, inlier_points2;
 

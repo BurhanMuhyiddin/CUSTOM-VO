@@ -9,6 +9,7 @@ namespace helper
                                       R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), t.at<double>(2,0),
                                                     0.0,               0.0,               0.0,              1.0);
     }
+
 }
 
 #endif // HELPER_FUNCTIONS_HPP_

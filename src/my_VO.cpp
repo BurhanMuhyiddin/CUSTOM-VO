@@ -80,7 +80,7 @@ bool MyVO::InitializeVO() {
 
     cv::Mat F, H, E, transformMat;
     double Fscore, Hscore;
-    std::vector<int> Finliers_index, Hinliers_index, inliers_index;
+    cv::Mat Finliers_mask, Hinliers_mask, inliers_mask;
 
     size_t min_num_matches = 100;
     double ratio_threshold = 0.45;
@@ -99,47 +99,56 @@ bool MyVO::InitializeVO() {
         EpipolarGeometry::SetPoints(matched_points.first, matched_points.second);
 
         // calculate fundamental matrix with its score
-        EpipolarGeometry::GetFundamentalMatrix(F, Fscore, Finliers_index);
+        EpipolarGeometry::GetFundamentalMatrix(F, Fscore, Finliers_mask);
+
+        // calculate essential matrix
+        F.convertTo(F, CV_32F);
+        E = K_.t() * F * K_;
 
         // calculate homography matrix with its score
-        EpipolarGeometry::GetHomographyMatrix(H, Hscore, Hinliers_index);
+        EpipolarGeometry::GetHomographyMatrix(H, Hscore, Hinliers_mask);
 
         // select model based on heuristic
         double ratio = Hscore / (Hscore + Fscore);
         if (ratio > ratio_threshold) {
             transformMat = H;
-            inliers_index = Hinliers_index;
+            inliers_mask = Hinliers_mask;
 
             is_homography = true;
         } else {
             transformMat = F;
-            // calculate essential matrix
-            E = K_.t().mul(F).mul(K_);
-            inliers_index = Finliers_index;
+            inliers_mask = Finliers_mask;
 
             is_homography = false;
         }
 
+        double inlier_points_ratio = cv::countNonZero(inliers_mask)*1.0 / inliers_mask.rows*1.0;
+        if (inlier_points_ratio < 0.90)
+            continue;
+
         cv::Mat R, t;
         if (is_homography) {
-            estimate_motion_from_homography_mat(H, K_, matched_points.first, matched_points.second, R, t, Hinliers_index);
+            estimate_motion_from_homography_mat(H, K_, matched_points.first, matched_points.second, R, t, Hinliers_mask);
+            if (R.empty()) {
+                estimate_motion_from_essential_mat(E, K_, matched_points.first, matched_points.second, R, t, Finliers_mask);
+            }
         } else {
-            estimate_motion_from_essential_mat(E, K_, matched_points.first, matched_points.second, R, t, Finliers_index);
+            estimate_motion_from_essential_mat(E, K_, matched_points.first, matched_points.second, R, t, Finliers_mask);
         }
 
         // do triangulation
         std::vector<cv::Point3f> xyz_points;
         cv::Mat T2;
         helper::from_Rt_to_T(R, t, T2);
+        std::vector<int> triangulation_inlier_indices;
         if (!triangulate_two_frames(matched_points.first,
                                     matched_points.second,
                                     rigid_transform,
                                     T2.rowRange(0, 3),
                                     K_,
                                     xyz_points,
+                                    triangulation_inlier_indices,
                                     DEG2RAD(min_parallax)))     continue;
-
-
     }
 
     return is_map_initialized;
@@ -159,7 +168,7 @@ void MyVO::ConfigureVO(const std::string& conf_file) {
     double fy = config[dataset_name]["camera_info"]["fy"].get<double>();
     double cx = config[dataset_name]["camera_info"]["cx"].get<double>();
     double cy = config[dataset_name]["camera_info"]["cy"].get<double>();
-    K_ = (cv::Mat_<double>(3,3) << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0);
+    K_ = (cv::Mat_<float>(3,3) << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0);
 }
 
 cv::Mat MyVO::ReadCurrentFrame() {
